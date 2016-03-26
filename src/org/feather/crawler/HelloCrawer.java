@@ -15,10 +15,14 @@ public class HelloCrawer {
 		print("Fetching %s...", url);
 
 		Document doc = Jsoup.connect(url).get();
+
 		Elements links = doc.select("a[href]");
 		Elements media = doc.select("[src]");
 		Elements imports = doc.select("link[href]");
 
+		
+		Elements regions = doc.select("") ;
+		
 		print("\nMedia: (%d)", media.size());
 		for (Element src : media) {
 			if (src.tagName().equals("img"))
