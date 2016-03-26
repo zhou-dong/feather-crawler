@@ -1,6 +1,9 @@
 package org.feather.crawler;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -11,30 +14,63 @@ public class CrawlCraigslist {
 
 	private static String url = "https://montgomery.craigslist.org/";
 
-	public static void main(String[] args) throws IOException {
-		print("Fetching %s...", url);
+	private String createAutoSearchUrl(String url) {
+		return url + "search/cta";
+	}
 
+	private String createNextPageUrl(String url, int i) {
+		return createNextPageUrl(url, i, 100);
+	}
+
+	private String createNextPageUrl(String url, int i, int count) {
+		return url + "?s=" + i * count;
+	}
+
+	List<String> getDetailedPageUrl(String url) {
+		Document doc = null;
+		try {
+			doc = Jsoup.connect(url).get();
+		} catch (IOException e) {
+			e.printStackTrace();
+			return Collections.emptyList();
+		}
+		return getAbsUrls(doc.select(".content > p > a[href]"));
+	}
+
+	List<String> getNearCitys() throws IOException {
 		Document doc = Jsoup.connect(url).get();
+		Element nearBlock = doc.select(".acitem").first();
+		Elements cityURLs = nearBlock.select("a[href]");
+		return getAbsUrls(cityURLs);
+	}
 
-		Element regions = doc.select(".acitem").first();
-
-		Elements list = regions.select("a[href]");
-		int index = 0;
-
-		for (Element link : list) {
+	private List<String> getAbsUrls(Elements urlElements) {
+		List<String> result = new ArrayList<>();
+		for (Element link : urlElements) {
 			String href = link.attr("abs:href");
-			System.out.println(href);
+			result.add(href);
+		}
+		return result;
+	}
+
+	public void getDetailedInfo(String url) {
+		Document doc = null;
+		try {
+			doc = Jsoup.connect(url).get();
+		} catch (IOException e) {
+			e.printStackTrace();
+			return;
 		}
 	}
 
-	private static void print(String msg, Object... args) {
-		System.out.println(String.format(msg, args));
+	public static void main(String[] args) throws IOException {
+		CrawlCraigslist craigslist = new CrawlCraigslist();
+
+		craigslist.getNearCitys();
+
+		List<String> list = craigslist
+				.getDetailedPageUrl("https://albanyga.craigslist.org/search/cta?s=800");
+		System.out.println(list);
 	}
 
-	private static String trim(String s, int width) {
-		if (s.length() > width)
-			return s.substring(0, width - 1) + ".";
-		else
-			return s;
-	}
 }
